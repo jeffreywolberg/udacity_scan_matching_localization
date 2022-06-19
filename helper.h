@@ -97,6 +97,7 @@ struct BoxQ
 
 void createVoxelFilter(pcl::PointCloud<PointT>::Ptr &scanCloud,
                        pcl::PointCloud<PointT>::Ptr &cloudFiltered);
+Eigen::Matrix4d ICP(PointCloudT::Ptr target, PointCloudT::Ptr source, Pose startingPose, int iterations);
 Eigen::Matrix4d transform2D(double theta, double xt, double yt);
 Eigen::Matrix4d transform3D(double yaw, double pitch, double roll, double xt, double yt, double zt);
 Pose getPose(Eigen::Matrix4d matrix);
@@ -109,6 +110,7 @@ void renderRay(pcl::visualization::PCLVisualizer::Ptr& viewer, Point p1, Point p
 void renderPath(pcl::visualization::PCLVisualizer::Ptr& viewer, const PointCloudT::Ptr& cloud, std::string name, Color color);
 Eigen::Quaternionf getQuaternion(float theta);
 void renderBox(pcl::visualization::PCLVisualizer::Ptr& viewer, BoxQ box, int id, Color color, float opacity);
+
 
 struct LineSegment{
 	// slope of y component
@@ -251,3 +253,4 @@ struct Lidar{
 		y += step * sin(theta);
 	}
 };
+
