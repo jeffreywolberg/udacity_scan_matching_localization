@@ -206,17 +206,19 @@ int main(){
             vg.setLeafSize(filterRes, filterRes, filterRes);
             vg.filter(*cloudFiltered);
           
-          	Eigen::Matrix4d transform = ICP(scanCloud, cloudFiltered, pose, 30);
+          	Eigen::Matrix4d transform = ICP(mapCloud, cloudFiltered, pose, 5);
           pose = getPose(transform);
 
 			// TODO: Find pose transform by using ICP or NDT matching
 			//pose = ....
 
 			// TODO: Transform scan so it aligns with ego's actual pose and render that scan
+          PointCloudT::Ptr transformCloudFiltered (new PointCloudT); 
+      pcl::transformPointCloud (*cloudFiltered, *transformCloudFiltered, transform);
 
 			viewer->removePointCloud("scan");
 			// TODO: Change `scanCloud` below to your transformed scan
-			renderPointCloud(viewer, scanCloud, "scan", Color(1,0,0) );
+			renderPointCloud(viewer, transformCloudFiltered, "scan", Color(1,0,0) );
 
 			viewer->removeAllShapes();
 			drawCar(pose, 1,  Color(0,1,0), 0.35, viewer);
@@ -271,9 +273,9 @@ Eigen::Matrix4d ICP(PointCloudT::Ptr target, PointCloudT::Ptr source, Pose start
       icp.setInputSource (transformSource);
       icp.setInputTarget (target);
     icp.setMaxCorrespondenceDistance (2);
-    //icp.setTransformationEpsilon(0.001);
-    //icp.setEuclideanFitnessEpsilon(.05);
-    //icp.setRANSACOutlierRejectionThreshold (10);
+    icp.setTransformationEpsilon(0.000001);
+    icp.setEuclideanFitnessEpsilon(.05);
+    icp.setRANSACOutlierRejectionThreshold (10);
 
       PointCloudT::Ptr cloud_icp (new PointCloudT);  // ICP output point cloud
       icp.align (*cloud_icp);
