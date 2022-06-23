@@ -143,7 +143,7 @@ int main(){
 
 	typename pcl::PointCloud<PointT>::Ptr cloudFiltered (new pcl::PointCloud<PointT>);
 	typename pcl::PointCloud<PointT>::Ptr scanCloud (new pcl::PointCloud<PointT>);
-
+  
 	lidar->Listen([&new_scan, &lastScanTime, &scanCloud](auto data){
 
 		if(new_scan){
@@ -163,7 +163,8 @@ int main(){
 	
 	Pose poseRef(Point(vehicle->GetTransform().location.x, vehicle->GetTransform().location.y, vehicle->GetTransform().location.z), Rotate(vehicle->GetTransform().rotation.yaw * pi/180, vehicle->GetTransform().rotation.pitch * pi/180, vehicle->GetTransform().rotation.roll * pi/180));
 	double maxError = 0;
-
+  
+  
 	while (!viewer->wasStopped())
   	{
 		while(new_scan){
@@ -202,12 +203,16 @@ int main(){
 			// TODO: (Filter scan using voxel filter)
           	pcl::VoxelGrid<PointT> vg;
 			vg.setInputCloud(scanCloud);
-			double filterRes = 0.5;
+			double filterRes = 1;
             vg.setLeafSize(filterRes, filterRes, filterRes);
             vg.filter(*cloudFiltered);
           
-          	Eigen::Matrix4d transform = ICP(mapCloud, cloudFiltered, pose, 5);
+          
+          
+//           	Eigen::Matrix4d transform = ICP(mapCloud, cloudFiltered, pose, 5);
+          Eigen::Matrix4d transform = NDT(mapCloud, cloudFiltered, pose, 100);
           pose = getPose(transform);
+//           
 
 			// TODO: Find pose transform by using ICP or NDT matching
 			//pose = ....
@@ -250,6 +255,37 @@ int main(){
 	return 0;
 }
 
+Eigen::Matrix4d NDT(PointCloudT::Ptr mapCloud, PointCloudT::Ptr source, Pose startingPose, int iterations) {
+
+    pcl::console::TicToc time;
+    time.tic ();
+
+    Eigen::Matrix4f init_guess = transform3D(startingPose.rotation.yaw, startingPose.rotation.pitch, startingPose.rotation.roll, startingPose.position.x, startingPose.position.y, startingPose.position.z).cast<float>();
+  
+    pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> ndt;
+  // Setting minimum transformation difference for termination condition.
+  ndt.setTransformationEpsilon (.001);
+  // Setting maximum step size for More-Thuente line search.
+//   ndt.setStepSize (1);
+  //Setting Resolution of NDT grid structure (VoxelGridCovariance).
+  ndt.setResolution (5);
+  ndt.setInputTarget (mapCloud);
+   ndt.setMaximumIterations (iterations);
+    ndt.setInputSource (source);
+
+      // Setting max number of registration iterations.
+     
+
+    PointCloudT::Ptr cloud_ndt (new PointCloudT);
+      ndt.align (*cloud_ndt, init_guess);
+
+    //cout << "Normal Distributions Transform has converged:" << ndt.hasConverged () << " score: " << ndt.getFitnessScore () <<  " time: " << time.toc() <<  " ms" << endl;
+
+    Eigen::Matrix4d transformation_matrix = ndt.getFinalTransformation ().cast<double>();
+
+    return transformation_matrix;
+
+}
 
 Eigen::Matrix4d ICP(PointCloudT::Ptr target, PointCloudT::Ptr source, Pose startingPose, int iterations){
 

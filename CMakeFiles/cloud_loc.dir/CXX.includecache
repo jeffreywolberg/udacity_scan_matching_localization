@@ -53,6 +53,8 @@ pcl/io/pcd_io.h
 -
 pcl/visualization/pcl_visualizer.h
 -
+pcl/registration/ndt.h
+-
 math.h
 -
 vector

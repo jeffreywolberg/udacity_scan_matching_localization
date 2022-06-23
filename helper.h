@@ -1,5 +1,6 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/registration/ndt.h>
 #include <math.h>
 #include <vector>
 #include <Eigen/Geometry>
@@ -95,6 +96,7 @@ struct BoxQ
     float cube_height;
 };
 
+Eigen::Matrix4d NDT(PointCloudT::Ptr mapCloud, PointCloudT::Ptr source, Pose startingPose, int iterations);
 void createVoxelFilter(pcl::PointCloud<PointT>::Ptr &scanCloud,
                        pcl::PointCloud<PointT>::Ptr &cloudFiltered);
 Eigen::Matrix4d ICP(PointCloudT::Ptr target, PointCloudT::Ptr source, Pose startingPose, int iterations);
